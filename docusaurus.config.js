@@ -3,7 +3,7 @@
 // (when paired with `@ts-check`).
 // There are various equivalent ways to declare your Docusaurus config.
 // See: https://docusaurus.io/docs/api/docusaurus-config
-
+import 'dotenv/config';
 import {themes as prismThemes} from 'prism-react-renderer';
 
 // This runs in Node.js - Don't use client-side code here (browser APIs, JSX...)
@@ -24,6 +24,7 @@ const config = {
   // If you aren't using GitHub pages, you don't need these.
   organizationName: 'seal0112', // Usually your GitHub org/user name.
   projectName: 'seal0112.github.io', // Usually your repo name.
+  deploymentBranch: 'gh-pages',
 
   onBrokenLinks: 'throw',
   onBrokenMarkdownLinks: 'warn',
