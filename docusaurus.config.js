@@ -77,7 +77,7 @@ const config = {
       // Replace with your project's social card
       image: 'img/docusaurus-social-card.jpg',
       navbar: {
-        title: 'My Site',
+        title: '雷門的隨手筆記',
         logo: {
           alt: 'My Site Logo',
           src: 'img/logo.svg',
