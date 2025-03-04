@@ -11,12 +11,15 @@ K8S的目的在於能以容易(Container)的方式託管各種服務，容器化
     - Worker Node: **用來存放container**
 - ETCD
     - Key-Value Database
-    - 用來
+    - 用來儲存cluster的資訊, 如 Node, PODs, Configs, Secret, Account, ...
+    - 對cluster的所有修改(增加Node, 部署POD or Replica Set), 都會儲存到ETCD, ETCD完成修改會，對cluster的變更才算完成
 - Kube-API Server
 - Kube Controller Manager
 - Kube Scheduler
 - Kubelet
+    - Worker Node與來跟Master Node溝通的工具
 - Kube Proxy
+    - Pod之間用來溝通
 
 - Pod
     - Worker Node不直接管理container，而是管理Pod
