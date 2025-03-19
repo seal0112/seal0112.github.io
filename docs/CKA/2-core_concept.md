@@ -72,9 +72,136 @@ spec: # 資源的內容
 # K8S Controller
 ## ReplicaSets
     - 舊版叫做: Replication Controller
-    - 高可用性（High Availability）: 如果一個應用程式（application）壞了，Replication Controller可以幫我們重啟一個或多個新的Pod
-    - 負載平衡（Load Balance）:
-    - 縮放性（Scaling）:
+    - 高可用性（High Availability）: 確保指定數量的 Pod 始終運行，如果有 Pod 當機或被刪除，ReplicaSet 會自動補上新的 Pod。
+    - 負載平衡（Load Balance）: ReplicaSet 本身不提供負載平衡，但通常與 Service（如 ClusterIP, NodePort, LoadBalancer）搭配，透過 kube-proxy 在所有 Pod 之間分發流量。
+    - 縮放性（Scaling）: 可以透過 kubectl scale 或 Horizontal Pod Autoscaler (HPA) 來動態調整 Pod 數量。
+```
+apiVersion: apps/v1
+kind: ReplicaSet
+metadata:
+  name: myapp-rs
+  labels:
+    app: myapp
+    type: front-end
+spec:
+  template:
+    matadata:
+      name: myapp-pod
+      labels:
+        app: myapp
+        type: front-end
+    spec:
+      containers:
+        - name: nginx-container
+          image: nginx
+  repilcas: 3
+  selector:
+    matchLabels:
+      type: front-end
+```
 ## Deployments
+  - **Deployment 管理 ReplicaSet**，可進行 版本更新（Rolling Update）、回滾（Rollback） 等操作。
+  - 在 K8s 大多數情況下，應該用 Deployment 而不是直接使用 ReplicaSet！
+```
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: myapp-deployment
+  labels:
+    app: myapp
+    type: front-end
+spec:
+  template:
+    matadata:
+      name: myapp-pod
+      labels:
+        app: myapp
+        type: front-end
+    spec:
+      containers:
+        - name: nginx-container
+          image: nginx
+  repilcas: 3
+  selector:
+    matchLabels:
+      type: front-end
+```
 ## Services
+Kubernetes 提供 Service 來讓 Pod 之間或外部用戶端可以存取應用程式。主要有 ClusterIP、NodePort、LoadBalancer 三種類型。
+### NodePort
+- 讓外部可以透過 Node IP + Port 存取服務
+- NodePort 會在每個 Node 上開一個高於 30000 的 Port（30000-32767），讓外部用戶可以透過 NodeIP:NodePort 存取服務。
+- 適合測試環境，但不建議用於正式環境，因為 缺乏負載均衡(Load Balancer)。
+```
+apiVersion: v1
+kind: Service
+metadata:
+  name: myapp-service
+spec:
+  type: NodePort
+  ports:
+    - targetPort: 80
+      port: 80
+      nodePort: 30008
+  selector:
+    app: myapp
+    type: front-end
+```
+### Cluster IP
+- 只允許集群內部存取（內部服務）
+- ClusterIP 是 K8s 預設的 Service 類型，它會分配一個 內部 IP，只能在 Kubernetes 內部使用，外部無法直接訪問。
+- 這種方式通常用於 內部微服務間的通訊。
+```
+apiVersion: v1
+kind: Service
+metadata:
+  name: myapp-service
+spec:
+  type: ClusterIP
+  ports:
+    - targetPort: 80
+      port: 80
+  selector:
+    app: myapp
+    type: front-end
+```
+內部存取方式
+```
+curl http://myapp-service:80
+```
+### Load Balancer
+- 雲端環境（AWS, GCP, Azure）才支援，提供自動負載均衡
+- 適用於雲端環境，當 Service 設為 LoadBalancer 時，Kubernetes 會請 雲端供應商（AWS ELB, GCP Load Balancer, Azure LB） 自動建立一個外部負載均衡器，並將流量導入對應的 Service。
+- 適合正式環境的對外服務。
+```
+apiVersion: v1
+kind: Service
+metadata:
+  name: myapp-service
+spec:
+  type: LoadBalancer
+  ports:
+    - targetPort: 80
+      port: 80
+  selector:
+    app: myapp
+    type: front-end
+```
+### Service 類型比較
+| 類型          | 存取方式                          | 適用場景                     |
+|---------------|-----------------------------------|------------------------------|
+| ClusterIP     | 內部存取（只能 Kubernetes 內部）  | 內部微服務通訊               |
+| NodePort      | 透過 NodeIP:NodePort 存取         | 測試環境、臨時存取           |
+| LoadBalancer  | 透過雲端負載均衡器提供外部存取    | 正式環境的外部流量           |
+
 ## Namespace
+- 用來在同一個 Kubernetes 叢集中分隔不同的資源，類似於「虛擬集群」的概念。
+- 資源隔離：不同環境（開發/測試/正式）可以用不同的 Namespace，確保不會互相影響。
+- 團隊或應用程式區隔：不同團隊或應用程式可以使用不同的 Namespace，管理起來更清楚。
+- 提高管理靈活度：可以針對 Namespace 設定 RBAC 權限、資源限制（Resource Quota）。
+```
+apiVerision: v1
+kind: Namespace
+metadata:
+  name: dev
+```
